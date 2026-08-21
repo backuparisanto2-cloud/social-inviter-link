@@ -21,6 +21,7 @@ export function itemPayload(values: ItemFormValues): ItemPayload {
 
 export function formInitial(item: {
   name: string;
+  code?: string | null;
   brand: string | null;
   serial_number: string | null;
   quantity: number;
@@ -37,6 +38,7 @@ export function formInitial(item: {
 }): Partial<ItemFormValues> {
   return {
     name: item.name,
+    code: item.code ?? null,
     brand: item.brand ?? "",
     serial_number: item.serial_number ?? "",
     quantity: item.quantity,
