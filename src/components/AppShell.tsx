@@ -34,6 +34,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { GuideDialog } from "@/components/GuideDialog";
 import { TEXT_SIZES, useTextSize } from "@/lib/text-size";
 
@@ -181,20 +186,26 @@ export function AppShell({
                       <span className="truncate">{item.label}</span>
                     </Link>
                   ))}
-                  <p className="mt-3 flex items-center gap-2 px-3 pb-1 text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                    <Calculator className="h-3.5 w-3.5" /> Akuntansi
-                  </p>
-                  {accounting.map((item) => (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  ))}
+                  <Collapsible defaultOpen={false} className="mt-2">
+                    <CollapsibleTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent [&[data-state=open]>svg:last-child]:rotate-180">
+                      <Calculator className="h-4 w-4 shrink-0" />
+                      <span className="flex-1 text-left">Akuntansi</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4">
+                      {accounting.map((item) => (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setOpen(false)}
+                          className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
                 </nav>
                 <div className="mt-2 border-t border-gold-line px-5 py-4">
                   <TextSizeControl />

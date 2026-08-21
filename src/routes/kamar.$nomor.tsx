@@ -60,7 +60,7 @@ function RoomDetail() {
   const roomItems = (items.data ?? []).filter((i) => i.room_id === room?.id);
   const kw = keyword.trim().toLowerCase();
   const list = roomItems.filter((i) =>
-    [i.name, i.brand, i.serial_number]
+    [i.code, i.name, i.brand, i.serial_number]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(kw)),
   );
@@ -102,7 +102,7 @@ function RoomDetail() {
               <Input
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Cari barang kamar ini..."
+                placeholder="Cari nama atau kode barang..."
                 className="h-11 pl-9"
                 aria-label="Cari barang"
               />
