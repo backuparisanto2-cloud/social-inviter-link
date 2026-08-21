@@ -9,6 +9,7 @@ import { formatRupiah, warrantyStatus } from "@/lib/inventory";
 
 export function InventoryItemCard({
   name,
+  code,
   condition,
   quantity,
   notes,
@@ -24,6 +25,7 @@ export function InventoryItemCard({
   actions,
 }: {
   name: string;
+  code?: string | null;
   condition: string;
   quantity: number;
   notes?: string | null;
@@ -66,6 +68,10 @@ export function InventoryItemCard({
             <p className="min-w-0 flex-1 truncate font-medium">{name}</p>
             <ConditionBadge condition={condition} />
           </div>
+
+          {code ? (
+            <p className="mt-1 font-mono text-[11px] tracking-wide text-gold">{code}</p>
+          ) : null}
 
           {meta ? <p className="mt-1 text-xs text-muted-foreground">{meta}</p> : null}
 

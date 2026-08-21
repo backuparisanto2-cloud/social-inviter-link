@@ -156,6 +156,7 @@ function RoomDetail() {
             <InventoryItemCard
               key={item.id}
               name={item.name}
+              code={item.code}
               condition={item.condition}
               quantity={item.quantity}
               notes={item.notes}

@@ -24,9 +24,11 @@ import {
 } from "@/components/ui/select";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { addCondition, conditionsQuery, SHARED_CATEGORIES } from "@/lib/inventory";
+import { previewItemCode } from "@/lib/item-code";
 
 export type ItemFormValues = {
   name: string;
+  code?: string | null;
   brand: string;
   serial_number: string;
   quantity: number;
@@ -45,6 +47,7 @@ export type ItemFormValues = {
 function initialValues(initial?: Partial<ItemFormValues>): ItemFormValues {
   return {
     name: initial?.name ?? "",
+    code: initial?.code ?? null,
     brand: initial?.brand ?? "",
     serial_number: initial?.serial_number ?? "",
     quantity: initial?.quantity ?? 1,
@@ -148,6 +151,12 @@ export function ItemFormDialog({
               placeholder="Contoh: Lemari Pakaian"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Kode inventaris:{" "}
+              <span className="font-mono text-gold">
+                {values.code ?? previewItemCode(values.name, values.purchase_date) ?? "otomatis setelah tanggal beli diisi"}
+              </span>
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
