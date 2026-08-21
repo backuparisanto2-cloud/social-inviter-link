@@ -111,7 +111,7 @@ function SharedFacilities() {
       if (category !== "Semua" && i.category !== category) return false;
       if (condition !== "Semua" && i.condition !== condition) return false;
       if (!q) return true;
-      return [i.name, i.brand, i.serial_number, i.location, i.vendor, i.notes, i.category]
+      return [i.code, i.name, i.brand, i.serial_number, i.location, i.vendor, i.notes, i.category]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
@@ -160,7 +160,7 @@ function SharedFacilities() {
             <Input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Cari fasilitas..."
+              placeholder="Cari nama atau kode fasilitas..."
               className="h-11 pl-9"
               aria-label="Cari fasilitas"
             />
