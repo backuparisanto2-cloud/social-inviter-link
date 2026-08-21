@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { PhotoUploader } from "@/components/PhotoUploader";
 import { addCondition, conditionsQuery, SHARED_CATEGORIES } from "@/lib/inventory";
-import { previewItemCode } from "@/lib/item-code";
+import { codePrefix, previewItemCode } from "@/lib/item-code";
 
 export type ItemFormValues = {
   name: string;
@@ -154,7 +154,11 @@ export function ItemFormDialog({
             <p className="text-xs text-muted-foreground">
               Kode inventaris:{" "}
               <span className="font-mono text-gold">
-                {values.code ?? previewItemCode(values.name, values.purchase_date) ?? "otomatis setelah tanggal beli diisi"}
+                {(() => {
+                  const prefix = codePrefix(values.name, values.purchase_date);
+                  if (values.code && prefix && values.code.startsWith(`${prefix}-`)) return values.code;
+                  return previewItemCode(values.name, values.purchase_date) ?? "otomatis setelah nama & tanggal beli diisi";
+                })()}
               </span>
             </p>
           </div>
