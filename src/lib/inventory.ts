@@ -174,6 +174,15 @@ export async function generateItemCode(
   return buildItemCode(name, purchaseDate, await existingCodes(prefix));
 }
 
+async function currentItem(table: ItemTable, id: string) {
+  const { data } = await supabase
+    .from(table)
+    .select("name, purchase_date")
+    .eq("id", id)
+    .maybeSingle();
+  return (data ?? { name: "", purchase_date: null }) as { name: string; purchase_date: string | null };
+}
+
 /** Kode untuk update: dipertahankan jika masih cocok, dibuat ulang jika nama/tanggal berubah. */
 async function codeForUpdate(
   table: ItemTable,
@@ -193,6 +202,43 @@ async function codeForUpdate(
   if (!prefix) return null;
   if (current?.code && current.code.startsWith(`${prefix}-`)) return current.code;
   return buildItemCode(name, date ?? null, await existingCodes(prefix));
+}
+
+type PgError = { message: string; code?: string } | null;
+
+function isCodeConflict(error: PgError): boolean {
+  if (!error) return false;
+  return error.code === "23505" || /duplicate key|_code_key/i.test(error.message);
+}
+
+function friendlyError(error: PgError, fallbackCode?: string | null): never {
+  if (isCodeConflict(error)) {
+    throw new Error(
+      `Kode inventaris ${fallbackCode ?? ""} sudah dipakai barang lain. Coba simpan lagi — sistem akan memberi nomor urut berikutnya.`.replace(
+        "  ",
+        " ",
+      ),
+    );
+  }
+  throw new Error(error?.message ?? "Gagal menyimpan data");
+}
+
+/** Menjalankan operasi tulis dengan kode unik; mengulang saat kode bentrok. */
+async function withUniqueCode(
+  name: string,
+  purchaseDate: string | null | undefined,
+  presetCode: string | null | undefined,
+  run: (code: string | null) => Promise<{ error: PgError }>,
+): Promise<void> {
+  let code = presetCode ?? (await generateItemCode(name, purchaseDate));
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { error } = await run(code);
+    if (!error) return;
+    if (!isCodeConflict(error) || !code) friendlyError(error, code);
+    const prefix = codePrefix(name, purchaseDate);
+    code = prefix ? await generateItemCode(name, purchaseDate) : null;
+  }
+  friendlyError({ message: "duplicate key", code: "23505" }, code);
 }
 
 /* ---- mutations ---- */
@@ -217,16 +263,32 @@ export async function deleteRoom(id: string) {
 
 
 export async function addRoomItem(input: ItemPayload & { room_id: string }) {
-  const code = input.code ?? (await generateItemCode(input.name, input.purchase_date));
-  const { error } = await supabase.from("room_items").insert({ ...input, code } as never);
-  if (error) throw new Error(error.message);
+  await withUniqueCode(input.name, input.purchase_date, input.code, async (code) => {
+    const { error } = await supabase.from("room_items").insert({ ...input, code } as never);
+    return { error };
+  });
 }
 
 export async function updateRoomItem(id: string, patch: Partial<ItemPayload>) {
   const code = await codeForUpdate("room_items", id, patch);
-  const next = code === undefined ? patch : { ...patch, code };
-  const { error } = await supabase.from("room_items").update(next as never).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (code === undefined) {
+    const { error } = await supabase.from("room_items").update(patch as never).eq("id", id);
+    if (error) friendlyError(error);
+    return;
+  }
+  const current = await currentItem("room_items", id);
+  await withUniqueCode(
+    patch.name ?? current.name,
+    "purchase_date" in patch ? patch.purchase_date : current.purchase_date,
+    code,
+    async (nextCode) => {
+      const { error } = await supabase
+        .from("room_items")
+        .update({ ...patch, code: nextCode } as never)
+        .eq("id", id);
+      return { error };
+    },
+  );
 }
 
 export async function deleteRoomItem(id: string) {
@@ -235,9 +297,10 @@ export async function deleteRoomItem(id: string) {
 }
 
 export async function addSharedItem(input: ItemPayload & { category: string; location?: string | null }) {
-  const code = input.code ?? (await generateItemCode(input.name, input.purchase_date));
-  const { error } = await supabase.from("shared_items").insert({ ...input, code } as never);
-  if (error) throw new Error(error.message);
+  await withUniqueCode(input.name, input.purchase_date, input.code, async (code) => {
+    const { error } = await supabase.from("shared_items").insert({ ...input, code } as never);
+    return { error };
+  });
 }
 
 export async function updateSharedItem(
@@ -245,9 +308,24 @@ export async function updateSharedItem(
   patch: Partial<ItemPayload & { category: string; location: string | null }>,
 ) {
   const code = await codeForUpdate("shared_items", id, patch);
-  const next = code === undefined ? patch : { ...patch, code };
-  const { error } = await supabase.from("shared_items").update(next as never).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (code === undefined) {
+    const { error } = await supabase.from("shared_items").update(patch as never).eq("id", id);
+    if (error) friendlyError(error);
+    return;
+  }
+  const current = await currentItem("shared_items", id);
+  await withUniqueCode(
+    patch.name ?? current.name,
+    "purchase_date" in patch ? patch.purchase_date : current.purchase_date,
+    code,
+    async (nextCode) => {
+      const { error } = await supabase
+        .from("shared_items")
+        .update({ ...patch, code: nextCode } as never)
+        .eq("id", id);
+      return { error };
+    },
+  );
 }
 
 export async function deleteSharedItem(id: string) {
