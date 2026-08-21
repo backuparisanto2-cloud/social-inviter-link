@@ -14,6 +14,8 @@ import {
 
   Menu,
   Type,
+  Calculator,
+  ChevronDown,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -26,6 +28,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { GuideDialog } from "@/components/GuideDialog";
 import { TEXT_SIZES, useTextSize } from "@/lib/text-size";
 
 const nav = [
@@ -34,14 +43,14 @@ const nav = [
   { to: "/denah", label: "Denah", icon: Map },
   { to: "/fasilitas", label: "Fasilitas Utama", icon: Wrench },
   { to: "/tenant", label: "Tenant & Pembayaran", icon: Users },
+  { to: "/kelola", label: "Kelola Data", icon: Settings },
+  { to: "/laporan", label: "Laporan", icon: FileBarChart },
+] as const;
+
+const accounting = [
   { to: "/pendapatan", label: "Pendapatan", icon: Coins },
   { to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
   { to: "/jurnal", label: "Jurnal Umum", icon: BookOpen },
-  { to: "/kelola", label: "Kelola Data", icon: Settings },
-
-  { to: "/laporan", label: "Laporan", icon: FileBarChart },
-
-
 ] as const;
 
 
@@ -121,10 +130,25 @@ export function AppShell({
                   {item.label}
                 </Link>
               ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  Akuntansi <ChevronDown className="h-3.5 w-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {accounting.map((item) => (
+                    <DropdownMenuItem key={item.to} asChild>
+                      <Link to={item.to} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" /> {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </nav>
             <div className="hidden md:block">
               <TextSizeControl compact />
             </div>
+            <GuideDialog />
 
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -150,6 +174,20 @@ export function AppShell({
                       key={item.to}
                       to={item.to}
                       activeOptions={{ exact: item.to === "/" }}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  ))}
+                  <p className="mt-3 flex items-center gap-2 px-3 pb-1 text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+                    <Calculator className="h-3.5 w-3.5" /> Akuntansi
+                  </p>
+                  {accounting.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
                       onClick={() => setOpen(false)}
                       className="flex items-center gap-3 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
                     >
